@@ -3,7 +3,7 @@
 //#define INVERTER_HYBRID			// Uncomment for Hybrid
 
 // The device name is used as the MQTT base topic. If you need more than one Sofar2mqtt on your network, give them unique names.
-const char* deviceName = "Sofar2mqtt";
+
 const char* version = "v2.1.1";
 
 #define WIFI_SSID	"guest23"
@@ -100,12 +100,15 @@ calcCRC by angelo.compagnucci@gmail.com and jpmzometa@gmail.com
 #define RS485_TRIES 8       // x 50mS to wait for RS485 input chars.
 // Wifi parameters.
 #include <ESP8266WiFi.h>
+const String macaddr = WiFi.macAddress();
+const char* deviceName = macaddr.c_str();
+const char* mqttClientID = deviceName;
 const char* wifiName = WIFI_SSID;
 WiFiClient wifi;
 
 // MQTT parameters
 #include <PubSubClient.h>
-const char* mqttClientID = deviceName;
+
 PubSubClient mqtt(wifi);
 
 // SoftwareSerial is used to create a second serial port, which will be deidcated to RS485.

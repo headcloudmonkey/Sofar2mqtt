@@ -6,12 +6,12 @@
 const char* deviceName = "Sofar2mqtt";
 const char* version = "v2.1.1";
 
-#define WIFI_SSID	"xxxxx"
-#define WIFI_PASSWORD	"xxxxx"
-#define MQTT_SERVER	"mqtt"
+#define WIFI_SSID	"guest23"
+#define WIFI_PASSWORD	"747-jumbo-jet"
+#define MQTT_SERVER	"192.168.0.15"
 #define MQTT_PORT	1883
-#define MQTT_USERNAME	"auser"			// Empty string for none.
-#define MQTT_PASSWORD	"apassword"
+#define MQTT_USERNAME	"sofar"			// Empty string for none.
+#define MQTT_PASSWORD	"Sierr4Foxtr0t"
 
 /*****
 Sofar2mqtt is a remote control interface for Sofar solar and battery inverters.
@@ -284,6 +284,9 @@ void updateOLED(String line1, String line2, String line3, String line4)
 	display.setTextSize(1);
 	display.setTextColor(WHITE);
 	display.setCursor(0,0);
+  
+  // Display Battery SOC in Line 1 by default
+  oledLine1 = "SOC " + String(batterySOC())+"%";
 
 	if(line1 != "NULL")
 	{
@@ -845,6 +848,45 @@ unsigned int batteryWatts()
 
 	return 0;
 }
+
+unsigned int batterySOC()
+{ 
+	if(INVERTER_RUNNINGSTATE == charging || INVERTER_RUNNINGSTATE == discharging)
+	{
+		modbusResponse  response;
+
+		if(!readSingleReg(SOFAR_SLAVE_ID, SOFAR_REG_BATTSOC, &response))
+		{
+			unsigned int w = ((response.data[0] << 8) | response.data[1]);
+/*
+			switch(INVERTER_RUNNINGSTATE)
+			{
+				case charging:
+					w = w*10;
+					break;
+
+				case discharging:
+					w = (65535 - w)*10;
+			}
+*/
+			return w;
+		}
+		else
+		{
+			Serial.println(response.errorMessage);
+			updateOLED("NULL", "NULL", "CRC-FAULT", "NULL");
+		}
+	}
+
+	return 0;
+}
+
+
+
+
+
+
+
 
 void setup()
 {

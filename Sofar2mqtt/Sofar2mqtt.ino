@@ -44,8 +44,7 @@ const char* version = "v2.1.1";
 #define WIFI_PASSWORD	"747-jumbo-jet"
 #define MQTT_SERVER	"iok-dev.iok.cloud"
 #define MQTT_PORT	8883
-#define MQTT_USERNAME	"sofar"			// Empty string for none.
-#define MQTT_PASSWORD	"sofar"
+
 
 
 
@@ -140,6 +139,8 @@ const String macaddr = WiFi.macAddress();
 const char* deviceName = macaddr.c_str();
 const char* mqttClientID = deviceName;
 const char* wifiName = WIFI_SSID;
+#define MQTT_USERNAME	deviceName			// Empty string for none.
+#define MQTT_PASSWORD	deviceName
 
 BearSSL::WiFiClientSecure wifi;
 // WiFiClient wifi;
@@ -454,7 +455,7 @@ void sendData()
 		state = state+"}";
 
 		//Prefix the mqtt topic name with deviceName.
-		String topic(deviceName);
+		String topic("v001/status/" + macaddr);
 		topic += "/state";
 		sendMqtt(const_cast<char*>(topic.c_str()), state);
 	}
@@ -463,7 +464,7 @@ void sendData()
 // This function is executed when an MQTT message arrives on a topic that we are subscribed to.
 void mqttCallback(String topic, byte *message, unsigned int length)
 {
-	if(!topic.startsWith(String(deviceName) + "/set/"))
+	if(!topic.startsWith("v001/control/" + macaddr))
 		return;
 
 	Serial.print("Message arrived on topic: ");
@@ -575,14 +576,14 @@ void mqttReconnect()
 			delay(1000);
 
 			//Set topic names to include the deviceName.
-			String standbyMode(deviceName);
-			standbyMode += "/set/standby";
-			String autoMode(deviceName);
-			autoMode += "/set/auto";
-			String chargeMode(deviceName);
-			chargeMode += "/set/charge";
-			String dischargeMode(deviceName);
-			dischargeMode += "/set/discharge";
+			String standbyMode("v001/control/" + macaddr);
+			standbyMode += "/standby";
+			String autoMode("v001/control/" + macaddr);
+			autoMode += "/auto";
+			String chargeMode("v001/control/" + macaddr);
+			chargeMode += "/charge";
+			String dischargeMode("v001/control/" + macaddr);
+			dischargeMode += "/discharge";
 
 			// Subscribe or resubscribe to topics.
 			if(
@@ -754,8 +755,8 @@ int sendPassiveCmd(uint8_t id, uint16_t cmd, uint16_t param, String pubTopic)
 		err = 0;
 	}
 
-	String topic(deviceName);
-	topic += "/response/" + pubTopic;
+	String topic("v001/response/" + macaddr + "/");
+	topic += pubTopic;
 	sendMqtt(const_cast<char*>(topic.c_str()), retMsg);
 	return err;
 }
@@ -976,6 +977,8 @@ void setup()
   wifi.setTrustAnchors(serverTrustedCA);
 
 	setup_wifi();
+  Serial.print("MAC ");
+  Serial.println(deviceName);
   setClock();
 	mqtt.setServer(MQTT_SERVER, MQTT_PORT);
 	mqtt.setCallback(mqttCallback);
